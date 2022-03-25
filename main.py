@@ -5,13 +5,17 @@ path = "D:\\Instrumentation-2\\01-1. Скрипка.wav"
 mypath = "C:\\Program Files (x86)\\Инструментоведение\\sound"
 
 
-def search(search_path, keyword):
+def search_subfolder(search_path):
+    print(os.listdir(search_path))
+
+
+def search_audio(search_path, keyword):
     for file in os.listdir(search_path):
         if os.path.isfile(search_path + '\\' + file):
             if keyword in file:
                 print(file, '==>', search_path + '\\' + file)
         else:
-            search(search_path + '\\' + file, keyword)
+            search_audio(search_path + '\\' + file, keyword)
 
 
 # Pass the audio data to an encoding function.
@@ -35,7 +39,8 @@ def encode_audio(path_audio):
 
 
 if __name__ == "__main__":
-    search(os.path.abspath(mypath), '')  # jpg формат поиска # '.' все файлы '123'
+    search_subfolder(os.path.abspath(mypath))
+    search_audio(os.path.abspath(mypath), '')  # jpg формат поиска # '.' все файлы '123'
     # encode_audio(path)
     print(path)
     print(mypath)
