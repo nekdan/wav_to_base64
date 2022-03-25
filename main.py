@@ -35,7 +35,7 @@ def encode_audio(path_audio):
 
 
 if __name__ == "__main__":
-    search(os.path.abspath(mypath), '.')  # jpg формат поиска # '.' все файлы '123'
+    search(os.path.abspath(mypath), '')  # jpg формат поиска # '.' все файлы '123'
     # encode_audio(path)
     print(path)
     print(mypath)
