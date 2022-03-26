@@ -47,7 +47,7 @@ def search_folder(search_path, name_folder):
     list_folder = os.listdir(search_path)
     for folder in list_folder:
         name_folder.append(folder.split('. ')[1])
-        # print(name_subfolder)
+        # print(name_folder)
     return name_folder
 
 
