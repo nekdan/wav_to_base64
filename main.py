@@ -43,12 +43,12 @@ def insert_instruments(records):
             print("Соединение с SQLite закрыто")
 
 
-def search_subfolder(search_path, name_subfolder):
-    list_subfolder = os.listdir(search_path)
-    for subfolder in list_subfolder:
-        name_subfolder.append(subfolder.split('. ')[1])
+def search_folder(search_path, name_folder):
+    list_folder = os.listdir(search_path)
+    for folder in list_folder:
+        name_folder.append(folder.split('. ')[1])
         # print(name_subfolder)
-    return name_subfolder
+    return name_folder
 
 
 def search_audio(search_path, keyword):
@@ -81,9 +81,9 @@ def encode_audio(path_audio):
 
 
 if __name__ == "__main__":
-    name_subfolder = search_subfolder(os.path.abspath(mypath), [])
+    name_folder = search_folder(os.path.abspath(mypath), [])
     # name_subfolder = ['Jaroslav', 'Timofei', 'Nikita']
-    insert_instruments(name_subfolder)
+    insert_instruments(name_folder)
     # search_audio(os.path.abspath(mypath), '')  # jpg формат поиска # '.' все файлы '123'
     # encode_audio(path)
     print(path)
