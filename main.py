@@ -45,11 +45,30 @@ def insert_instruments(records):
 
 def search_folder(search_path, name_folder):
     list_folder = os.listdir(search_path)
+    print(list_folder)
     for folder in list_folder:
         name_folder.append(folder.split('. ')[1])
         # print(name_folder)
+    print(name_folder)
     return name_folder
 
+
+def search_subfolder(search_path, name_subfolder):
+    with os.scandir(search_path) as scan:
+        subdir = [file.name for file in scan if file.is_dir()]
+    print(subdir)
+    '''
+    list_subfolder = os.listdir(search_path)
+    for subfolder in list_subfolder:
+        name_subfolder.append(subfolder.split('. ')[1])
+        # print(name_subfolder)
+        if os.path.isfile(search_path + '\\' + subfolder):
+            print(subfolder)
+        else:
+            search_subfolder(search_path + '\\' + subfolder, name_subfolder)
+            #print(search_path + '\\' + subfolder)
+    return subfolder
+    '''
 
 def search_audio(search_path, keyword):
     for file in os.listdir(search_path):
@@ -82,8 +101,9 @@ def encode_audio(path_audio):
 
 if __name__ == "__main__":
     name_folder = search_folder(os.path.abspath(mypath), [])
-    # name_subfolder = ['Jaroslav', 'Timofei', 'Nikita']
-    insert_instruments(name_folder)
+    search_subfolder(os.path.abspath(mypath), [])
+    # name_folder = ['Jaroslav', 'Timofei', 'Nikita']
+    #insert_instruments(name_folder)
     # search_audio(os.path.abspath(mypath), '')  # jpg формат поиска # '.' все файлы '123'
     # encode_audio(path)
     print(path)
