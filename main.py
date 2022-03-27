@@ -90,12 +90,92 @@ def search_subfolder(search_path, name_subfolder, count_subfolder):
 
 
 def search_audio(search_path, keyword):
+
+    '''
     for file in os.listdir(search_path):
         if os.path.isfile(search_path + '\\' + file):
             if keyword in file:
-                print(file, '==>', search_path + '\\' + file)
+                #print(file, '==>', search_path + '\\' + file)
+                #print(file)
+                name = file.partition(' ')[2]
+                #print(name)
         else:
             search_audio(search_path + '\\' + file, keyword)
+    '''
+    count_track = 0
+
+    try:
+        sqlite_connection = sqlite3.connect('D:\\Instrum-v2\\app.db')
+        cursor = sqlite_connection.cursor()
+        print("Подключен к SQLite")
+
+        for file in os.listdir(search_path):
+            if os.path.isfile(search_path + '\\' + file):
+                if keyword in file:
+                    # print(file, '==>', search_path + '\\' + file)
+                    # print(file)
+                    name = file.partition(' ')[2]
+                    # print(name)
+                    if file.endswith('.wav'):
+                        # заполняем треками
+                        count_track += 1
+                        #print(name, ' - это трек')
+                    else:
+                        #print(name, ' - это категория')
+                        # заполняем таблицу Sounds категориями треков
+                        cursor.execute("SELECT Name FROM Sounds")
+                        sound_in_bd = cursor.fetchall()
+                        if sound_in_bd[0] == (name,):
+                            print('Такая категория звуков есть в базе')
+                            #print(search_path)
+                            instrument = search_path.rpartition('\\')[-1]
+                            name_instrument = instrument.partition(' ')[2]
+                            print(name_instrument)
+
+                            cursor.execute("SELECT Id FROM Instuments WHERE Name=?", (name_instrument,))
+                            id_instrument = cursor.fetchone()
+                            print(id_instrument)
+
+                            sqlite_insert_query = """INSERT INTO Sounds
+                                                         (Id, Name, SubinstumentId, InstumentId, SubinstrumentId)
+                                                         VALUES (NULL, ?, NULL, ?, NULL);"""
+                            cursor.execute(sqlite_insert_query, (name, id_instrument[0]))
+
+            else:
+                search_audio(search_path + '\\' + file, keyword)
+        print(count_track)
+
+        '''
+        cursor.execute("SELECT Name FROM Instuments")
+        instruments_in_bd = cursor.fetchall()
+        print(instruments_in_bd[0])
+        print((records[0],))
+        if instruments_in_bd[0] == (records[0],):
+            print('Такой инструмент есть в базе')
+        '''
+
+        sqlite_insert_query = """INSERT INTO Instuments
+                                 (Id, Name, CategoryId)
+                                 VALUES (NULL, ?, 1);"""
+
+        # cursor.execute("INSERT INTO Instuments VALUES(NULL, ?, 1)", (records[2],))
+        #for instrument in records:
+        #    cursor.execute(sqlite_insert_query, (instrument,))
+        # .executemany(sqlite_insert_query, (records,))
+        # cursor.executemany("INSERT INTO Instuments VALUES(NULL, ?, 1)", (records,))
+        sqlite_connection.commit()
+        print("Записи успешно вставлены в таблицу sqlitedb_developers", cursor.rowcount)
+        sqlite_connection.commit()
+        cursor.close()
+
+    except sqlite3.Error as error:
+        print("Ошибка при работе с SQLite:", error)
+    finally:
+        if sqlite_connection:
+            sqlite_connection.close()
+            print("Соединение с SQLite закрыто")
+
+
 
 
 # Pass the audio data to an encoding function.
@@ -119,11 +199,11 @@ def encode_audio(path_audio):
 
 
 if __name__ == "__main__":
-    list_folder = search_folder(os.path.abspath(mypath), [])
-    search_subfolder(os.path.abspath(mypath), [], 0)
+    # list_folder = search_folder(os.path.abspath(mypath), [])
+    # search_subfolder(os.path.abspath(mypath), [], 0)
     # name_folder = ['Jaroslav', 'Timofei', 'Nikita']
     # insert_instruments(list_folder)
-    # search_audio(os.path.abspath(mypath), '')  # jpg формат поиска # '.' все файлы '123'
+    search_audio(os.path.abspath(mypath), '')  # jpg формат поиска # '.' все файлы '123'
     # encode_audio(path)
     print(path)
     print(mypath)
