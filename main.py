@@ -2,7 +2,7 @@ import base64
 import os
 import sqlite3
 
-path = "D:\\Instrumentation-2\\01-1. Скрипка.wav"
+#path = "D:\\Instrumentation-2\\01-1. Скрипка.wav"
 mypath = "C:\\Program Files (x86)\\Инструментоведение\\sound"
 
 
@@ -116,15 +116,84 @@ def search_audio(search_path, keyword):
                     # print(file)
                     name = file.partition(' ')[2]
                     # print(name)
+                    number = file.split(' ')[0]
+                    #print(number, 'номер')
+                    if '.' not in number:
+                        # записываем категорию для входящих в неё треков
+                        name_category = name
+                        '''
+                        # заполняем таблицу Sounds категориями треков
+                        #cursor.execute("SELECT Name FROM Sounds")
+                        #sound_in_bd = cursor.fetchall()
+                        #print(sound_in_bd[0], '- первая запись в бд')
+                        #if sound_in_bd[0] == (name,):
+                        #print('Такая категория звуков есть в базе')
+                        #print(search_path)
+                        instrument = search_path.rpartition('\\')[-1]
+                        name_instrument = instrument.partition(' ')[2]
+                        print(name_instrument)
+                        cursor.execute("SELECT Id FROM Instuments WHERE Name = ?", (name_instrument,))
+                        id_instrument = cursor.fetchone()
+                        print(id_instrument)
+                        sqlite_insert_query = """INSERT INTO Sounds
+                                                         (Id, Name, SubinstumentId, InstumentId, SubinstrumentId)
+                                                         VALUES (NULL, ?, NULL, ?, NULL);"""
+                        cursor.execute(sqlite_insert_query, (name, id_instrument[0]))
+                        '''
+
+                    elif '-' in number:
+                        name_without_extension = name.split('.')[0]
+                        print(name_without_extension, 'Это трек в категории:', name_category)
+                        cursor.execute("SELECT Id FROM Sounds WHERE Name = ?", (name_category,))
+                        sound_id = cursor.fetchone()
+                        print(sound_id, 'это id sound')
+                        sqlite_insert_query = """INSERT INTO Subsounds
+                                                    (Id, Name, SoundId) 
+                                                    VALUES (NULL, ?, ?);"""
+                        #cursor.execute(sqlite_insert_query, (name_without_extension, sound_id))
+
+                        path = search_path + '\\' + file
+                        #audio_base64 = encode_audio(path)
+
+                        cursor.execute("SELECT Id FROM Subsounds WHERE Name = ? AND SoundId = ? ORDER BY Id DESC",
+                                       (name_without_extension, sound_id[0]))
+                        subsound_id = cursor.fetchone()
+                        # Добавить проверку, если subsound_id повторяется, то прибавлять к нему столько раз сколько
+                        # он повторяется
+                        # Или проверить с обратной сортировкой, что он добавляет файл, потом считывает, а не добавляет сразу
+
+                        if subsound_id:
+                            print(subsound_id, 'это id subsound')
+
+                        sqlite_insert_query = """INSERT INTO SoundsDatas
+                                                    (Id, Description, SoundBase64, SoundId, SubsoundId) 
+                                                    VALUES (NULL, ?, ?, NULL, ?);"""
+                        #cursor.execute(sqlite_insert_query, (name, audio_base64, subsound_id))
+
+                    else:
+                        print('самостоятельный трек', name)
+
                     if file.endswith('.wav'):
                         # заполняем треками
                         count_track += 1
                         #print(name, ' - это трек')
+                        instrument = search_path.rpartition('\\')[-1]
+                        name_instrument = instrument.partition(' ')[2]
+                        #print(file)
+                        #number = file.split('. ')[0]
+                        #if '-' in number:
+                            #print(file, '- входит в категорию')
+
+                        #else:
+                            #print(file, '- самостоятельный')
+
+
                     else:
                         #print(name, ' - это категория')
                         # заполняем таблицу Sounds категориями треков
                         cursor.execute("SELECT Name FROM Sounds")
                         sound_in_bd = cursor.fetchall()
+                        '''
                         if sound_in_bd[0] == (name,):
                             print('Такая категория звуков есть в базе')
                             #print(search_path)
@@ -140,6 +209,7 @@ def search_audio(search_path, keyword):
                                                          (Id, Name, SubinstumentId, InstumentId, SubinstrumentId)
                                                          VALUES (NULL, ?, NULL, ?, NULL);"""
                             cursor.execute(sqlite_insert_query, (name, id_instrument[0]))
+                            '''
 
             else:
                 search_audio(search_path + '\\' + file, keyword)
@@ -194,8 +264,9 @@ def encode_audio(path_audio):
     with open(path_audio, "rb") as file:
         data = file.read()
     encoded = base64.b64encode(data)
-    with open('xyz.txt', 'wb') as f:  # открытие в режиме записи
-        f.write(encoded)  # запись в файл
+    #with open('xyz.txt', 'wb') as f:  # открытие в режиме записи
+    #    f.write(encoded)  # запись в файл
+    return encoded
 
 
 if __name__ == "__main__":
@@ -205,5 +276,4 @@ if __name__ == "__main__":
     # insert_instruments(list_folder)
     search_audio(os.path.abspath(mypath), '')  # jpg формат поиска # '.' все файлы '123'
     # encode_audio(path)
-    print(path)
     print(mypath)
