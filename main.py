@@ -25,11 +25,11 @@ def insert_instruments(records):
                                  (Id, Name, CategoryId)
                                  VALUES (NULL, ?, 1);"""
 
-        #cursor.execute("INSERT INTO Instuments VALUES(NULL, ?, 1)", (records[2],))
+        # cursor.execute("INSERT INTO Instuments VALUES(NULL, ?, 1)", (records[2],))
         for instrument in records:
             cursor.execute(sqlite_insert_query, (instrument,))
-        #.executemany(sqlite_insert_query, (records,))
-        #cursor.executemany("INSERT INTO Instuments VALUES(NULL, ?, 1)", (records,))
+        # .executemany(sqlite_insert_query, (records,))
+        # cursor.executemany("INSERT INTO Instuments VALUES(NULL, ?, 1)", (records,))
         sqlite_connection.commit()
         print("Записи успешно вставлены в таблицу sqlitedb_developers", cursor.rowcount)
         sqlite_connection.commit()
@@ -44,19 +44,37 @@ def insert_instruments(records):
 
 
 def search_folder(search_path, name_folder):
-    list_folder = os.listdir(search_path)
-    print(list_folder)
+    with os.scandir(search_path) as scan:
+        list_folder = [file.name for file in scan if file.is_dir()]
     for folder in list_folder:
         name_folder.append(folder.split('. ')[1])
-        # print(name_folder)
-    print(name_folder)
     return name_folder
 
 
-def search_subfolder(search_path, name_subfolder):
+def search_subfolder(search_path, name_subfolder, count_subfolder):
     with os.scandir(search_path) as scan:
         subdir = [file.name for file in scan if file.is_dir()]
-    print(subdir)
+        # count_subfolder += 1
+        # print(count_subfolder)
+        if subdir:
+            # print(subdir)
+            count_subfolder += 1
+            # print(count_subfolder)
+            if count_subfolder < 2:
+                print(subdir)  # список папок (инструментов)
+                print(search_path)  # путь к основной папке
+            else:
+                print(subdir)  # список подпапок ( вложенные инструменты)
+                print(search_path)  # путь к инструменту
+        for file in subdir:
+            if os.path.isdir(search_path + '\\' + file):
+                # print(file)
+                search_subfolder(search_path + '\\' + file, name_subfolder, count_subfolder)
+    # print(subdir)
+
+    for folder in subdir:
+        name_subfolder.append(folder.split('. ')[1])
+    # print(name_subfolder)
     '''
     list_subfolder = os.listdir(search_path)
     for subfolder in list_subfolder:
@@ -69,6 +87,7 @@ def search_subfolder(search_path, name_subfolder):
             #print(search_path + '\\' + subfolder)
     return subfolder
     '''
+
 
 def search_audio(search_path, keyword):
     for file in os.listdir(search_path):
@@ -100,10 +119,10 @@ def encode_audio(path_audio):
 
 
 if __name__ == "__main__":
-    name_folder = search_folder(os.path.abspath(mypath), [])
-    search_subfolder(os.path.abspath(mypath), [])
+    list_folder = search_folder(os.path.abspath(mypath), [])
+    search_subfolder(os.path.abspath(mypath), [], 0)
     # name_folder = ['Jaroslav', 'Timofei', 'Nikita']
-    #insert_instruments(name_folder)
+    # insert_instruments(list_folder)
     # search_audio(os.path.abspath(mypath), '')  # jpg формат поиска # '.' все файлы '123'
     # encode_audio(path)
     print(path)
