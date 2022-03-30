@@ -2,7 +2,7 @@ import base64
 import os
 import sqlite3
 
-#path = "D:\\Instrumentation-2\\01-1. Скрипка.wav"
+path = "D:\\Instrumentation-2\\01-1. Скрипка.wav"
 mypath = "C:\\Program Files (x86)\\Инструментоведение\\sound"
 
 
@@ -142,18 +142,22 @@ def search_audio(search_path, keyword):
                         '''
 
                     elif '-' in number:
+                        # определяем треки в категории
                         name_without_extension = name.split('.')[0]
                         print(name_without_extension, 'Это трек в категории:', name_category)
                         cursor.execute("SELECT Id FROM Sounds WHERE Name = ?", (name_category,))
                         sound_id = cursor.fetchone()
-                        print(sound_id, 'это id sound')
-                        sqlite_insert_query = """INSERT INTO Subsounds
+                        print(sound_id[0], 'это id sound')
+                        # Если sound_id == 1 то выполнить скрипт --------------
+                        if sound_id[0] == 1:
+                            sqlite_insert_query = """INSERT INTO Subsounds
                                                     (Id, Name, SoundId) 
                                                     VALUES (NULL, ?, ?);"""
-                        #cursor.execute(sqlite_insert_query, (name_without_extension, sound_id))
+                            cursor.execute(sqlite_insert_query, (name_without_extension, sound_id[0]))
 
-                        path = search_path + '\\' + file
-                        #audio_base64 = encode_audio(path)
+                            #path = search_path + '\\' + file
+                            audio_base64 = encode_audio(path)
+                            print(audio_base64)
 
                         cursor.execute("SELECT Id FROM Subsounds WHERE Name = ? AND SoundId = ? ORDER BY Id DESC",
                                        (name_without_extension, sound_id[0]))
@@ -161,14 +165,15 @@ def search_audio(search_path, keyword):
                         # Добавить проверку, если subsound_id повторяется, то прибавлять к нему столько раз сколько
                         # он повторяется
                         # Или проверить с обратной сортировкой, что он добавляет файл, потом считывает, а не добавляет сразу
+                        if sound_id[0] == 1:
+                            if subsound_id:
+                                print(subsound_id[0], 'это id subsound')
+                                #print('Кортеж с треком -- ', (name, audio_base64, subsound_id[0]))
 
-                        if subsound_id:
-                            print(subsound_id, 'это id subsound')
-
-                        sqlite_insert_query = """INSERT INTO SoundsDatas
+                                sqlite_insert_query = """INSERT INTO SoundsDatas
                                                     (Id, Description, SoundBase64, SoundId, SubsoundId) 
                                                     VALUES (NULL, ?, ?, NULL, ?);"""
-                        #cursor.execute(sqlite_insert_query, (name, audio_base64, subsound_id))
+                                #cursor.execute(sqlite_insert_query, (name, audio_base64, subsound_id[0]))
 
                     else:
                         print('самостоятельный трек', name)
@@ -266,6 +271,7 @@ def encode_audio(path_audio):
     encoded = base64.b64encode(data)
     #with open('xyz.txt', 'wb') as f:  # открытие в режиме записи
     #    f.write(encoded)  # запись в файл
+    #print(encoded)
     return encoded
 
 
