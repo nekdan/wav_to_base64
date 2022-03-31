@@ -121,7 +121,7 @@ def search_audio(search_path, keyword):
                     if '.' not in number:
                         # записываем категорию для входящих в неё треков
                         name_category = name
-                        '''
+
                         # заполняем таблицу Sounds категориями треков
                         #cursor.execute("SELECT Name FROM Sounds")
                         #sound_in_bd = cursor.fetchall()
@@ -130,34 +130,36 @@ def search_audio(search_path, keyword):
                         #print('Такая категория звуков есть в базе')
                         #print(search_path)
                         instrument = search_path.rpartition('\\')[-1]
-                        name_instrument = instrument.partition(' ')[2]
-                        print(name_instrument)
-                        cursor.execute("SELECT Id FROM Instuments WHERE Name = ?", (name_instrument,))
-                        id_instrument = cursor.fetchone()
-                        print(id_instrument)
+                        instrument_name = instrument.partition(' ')[2]
+                        print(instrument_name)
+                        cursor.execute("SELECT Id FROM Instuments WHERE Name = ?", (instrument_name,))
+                        instrument_id = cursor.fetchone()
+                        print(instrument_id)
                         sqlite_insert_query = """INSERT INTO Sounds
                                                          (Id, Name, SubinstumentId, InstumentId, SubinstrumentId)
                                                          VALUES (NULL, ?, NULL, ?, NULL);"""
-                        cursor.execute(sqlite_insert_query, (name, id_instrument[0]))
-                        '''
+                        #cursor.execute(sqlite_insert_query, (name, instrument_id[0]))
+
 
                     elif '-' in number:
                         # определяем треки в категории
                         name_without_extension = name.split('.')[0]
                         print(name_without_extension, 'Это трек в категории:', name_category)
-                        cursor.execute("SELECT Id FROM Sounds WHERE Name = ?", (name_category,))
+                        cursor.execute("SELECT Id FROM Sounds WHERE Name = ? AND InstumentId = ?",
+                                       (name_category, instrument_id[0]))
                         sound_id = cursor.fetchone()
                         print(sound_id[0], 'это id sound')
+                        print(instrument_id[0], '- это id instrument')
                         # Если sound_id == 1 то выполнить скрипт --------------
                         if sound_id[0] == 1:
                             sqlite_insert_query = """INSERT INTO Subsounds
                                                     (Id, Name, SoundId) 
                                                     VALUES (NULL, ?, ?);"""
-                            cursor.execute(sqlite_insert_query, (name_without_extension, sound_id[0]))
+                            #cursor.execute(sqlite_insert_query, (name_without_extension, sound_id[0]))
 
                             #path = search_path + '\\' + file
                             audio_base64 = encode_audio(path)
-                            print(audio_base64)
+                            #print(audio_base64)
 
                         cursor.execute("SELECT Id FROM Subsounds WHERE Name = ? AND SoundId = ? ORDER BY Id DESC",
                                        (name_without_extension, sound_id[0]))
@@ -173,6 +175,7 @@ def search_audio(search_path, keyword):
                                 sqlite_insert_query = """INSERT INTO SoundsDatas
                                                     (Id, Description, SoundBase64, SoundId, SubsoundId) 
                                                     VALUES (NULL, ?, ?, NULL, ?);"""
+                                # Разобраться почему вставляет base64 в другом формате -------------------------
                                 #cursor.execute(sqlite_insert_query, (name, audio_base64, subsound_id[0]))
 
                     else:
@@ -183,7 +186,7 @@ def search_audio(search_path, keyword):
                         count_track += 1
                         #print(name, ' - это трек')
                         instrument = search_path.rpartition('\\')[-1]
-                        name_instrument = instrument.partition(' ')[2]
+                        instrument_name = instrument.partition(' ')[2]
                         #print(file)
                         #number = file.split('. ')[0]
                         #if '-' in number:
@@ -203,17 +206,17 @@ def search_audio(search_path, keyword):
                             print('Такая категория звуков есть в базе')
                             #print(search_path)
                             instrument = search_path.rpartition('\\')[-1]
-                            name_instrument = instrument.partition(' ')[2]
-                            print(name_instrument)
+                            instrument_name = instrument.partition(' ')[2]
+                            print(instrument_name)
 
-                            cursor.execute("SELECT Id FROM Instuments WHERE Name=?", (name_instrument,))
-                            id_instrument = cursor.fetchone()
-                            print(id_instrument)
+                            cursor.execute("SELECT Id FROM Instuments WHERE Name=?", (instrument_name,))
+                            instrument_id = cursor.fetchone()
+                            print(instrument_id)
 
                             sqlite_insert_query = """INSERT INTO Sounds
                                                          (Id, Name, SubinstumentId, InstumentId, SubinstrumentId)
                                                          VALUES (NULL, ?, NULL, ?, NULL);"""
-                            cursor.execute(sqlite_insert_query, (name, id_instrument[0]))
+                            cursor.execute(sqlite_insert_query, (name, instrument_id[0]))
                             '''
 
             else:
