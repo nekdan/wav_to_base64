@@ -89,7 +89,7 @@ def search_subfolder(search_path, name_subfolder, count_subfolder):
     '''
 
 
-def search_audio(search_path, keyword):
+def search_audio(search_path, keyword, count_subfolder):
 
     '''
     for file in os.listdir(search_path):
@@ -103,6 +103,7 @@ def search_audio(search_path, keyword):
             search_audio(search_path + '\\' + file, keyword)
     '''
     count_track = 0
+    count_subfolder += 1
 
     try:
         sqlite_connection = sqlite3.connect('D:\\Instrum-v2\\app.db')
@@ -110,6 +111,9 @@ def search_audio(search_path, keyword):
         print("Подключен к SQLite")
 
         for file in os.listdir(search_path):
+            if os.path.isdir(search_path + '\\' + file):
+                if keyword in file:
+                    print('ЭТО ПОДПАПКА - ', file)
             if os.path.isfile(search_path + '\\' + file):
                 if keyword in file:
                     # print(file, '==>', search_path + '\\' + file)
@@ -122,10 +126,100 @@ def search_audio(search_path, keyword):
                     instrument = search_path.rpartition('\\')[-1]
                     instrument_name = instrument.partition(' ')[2]
                     print(instrument_name)
-                    cursor.execute("SELECT Id FROM Instuments WHERE Name = ?", (instrument_name,))
-                    instrument_id = cursor.fetchone()
-                    print(instrument_id)
+                    print(count_subfolder, '-----------СЧЁТЧИК--------------')
+                    # если это папка, сюда перенести всю логику
+                    if count_subfolder < 3:
+                        cursor.execute("SELECT Id FROM Instuments WHERE Name = ?", (instrument_name,))
+                        instrument_id = cursor.fetchone()
+                        print(instrument_id)
+                        if '.' not in number:
+                            # записываем категорию для входящих в неё треков
+                            name_category = name
 
+                            # заполняем таблицу Sounds категориями треков
+                            # cursor.execute("SELECT Name FROM Sounds")
+                            # sound_in_bd = cursor.fetchall()
+                            # print(sound_in_bd[0], '- первая запись в бд')
+                            # if sound_in_bd[0] == (name,):
+                            # print('Такая категория звуков есть в базе')
+                            # print(search_path)
+                            # instrument = search_path.rpartition('\\')[-1]
+                            # instrument_name = instrument.partition(' ')[2]
+                            # print(instrument_name)
+                            # cursor.execute("SELECT Id FROM Instuments WHERE Name = ?", (instrument_name,))
+                            # instrument_id = cursor.fetchone()
+                            # print(instrument_id)
+                            sqlite_insert_query = """INSERT INTO Sounds
+                                                             (Id, Name, SubinstumentId, InstumentId, SubinstrumentId)
+                                                             VALUES (NULL, ?, NULL, ?, NULL);"""
+                            # cursor.execute(sqlite_insert_query, (name, instrument_id[0]))
+
+
+                        elif '-' in number:
+                            # определяем треки в категории
+                            # name_without_extension = name.split('.')[0]
+                            print(name_without_extension, 'Это трек в категории:', name_category)
+                            cursor.execute("SELECT Id FROM Sounds WHERE Name = ? AND InstumentId = ?",
+                                           (name_category, instrument_id[0]))
+                            sound_id = cursor.fetchone()
+                            print(sound_id[0], 'это id sound')
+                            print(instrument_id[0], '- это id instrument')
+                            # Если sound_id == 1 то выполнить скрипт --------------
+                            if sound_id[0] == 1:
+                                sqlite_insert_query = """INSERT INTO Subsounds
+                                                        (Id, Name, SoundId) 
+                                                        VALUES (NULL, ?, ?);"""
+                                # cursor.execute(sqlite_insert_query, (name_without_extension, sound_id[0]))
+
+                                path = search_path + '\\' + file
+                                audio_base64 = encode_audio(path)
+                                # print(audio_base64)
+
+                            cursor.execute("SELECT Id FROM Subsounds WHERE Name = ? AND SoundId = ? ORDER BY Id DESC",
+                                           (name_without_extension, sound_id[0]))
+                            subsound_id = cursor.fetchone()
+                            # Добавить проверку, если subsound_id повторяется, то прибавлять к нему столько раз сколько
+                            # он повторяется
+                            # Или проверить с обратной сортировкой, что он добавляет файл, потом считывает, а не добавляет сразу
+                            if sound_id[0] == 1:
+                                if subsound_id:
+                                    print(subsound_id[0], 'это id subsound')
+                                    # print('Кортеж с треком -- ', (name, audio_base64, subsound_id[0]))
+
+                                    sqlite_insert_query = """INSERT INTO SoundsDatas
+                                                        (Id, Description, SoundBase64, SoundId, SubsoundId) 
+                                                        VALUES (NULL, ?, ?, NULL, ?);"""
+                                    # Разобраться почему вставляет base64 в другом формате -------------------------
+                                    # cursor.execute(sqlite_insert_query, (name, audio_base64, subsound_id[0]))
+
+                        else:
+                            # записываем самостоятельные треки в Sounds
+                            print('самостоятельный трек', name_without_extension, 'id =', instrument_id)
+                            sqlite_insert_query = """INSERT INTO Sounds
+                                                        (Id, Name, SubinstumentId, InstumentId, SubinstrumentId)
+                                                        VALUES (NULL, ?, NULL, ?, NULL);"""
+                            # cursor.execute(sqlite_insert_query, (name_without_extension, instrument_id[0]))
+                            path = search_path + '\\' + file
+                            audio_base64 = encode_audio(path)
+                            cursor.execute("SELECT Id FROM Sounds WHERE Name = ? AND InstumentId = ?",
+                                           (name_without_extension, instrument_id[0]))
+                            sound_id = cursor.fetchone()
+                            print('sound_id =', sound_id)
+                            # условие для отладки
+                            # if sound_id[0] == 125:
+                            # sqlite_insert_query = """INSERT INTO SoundsDatas
+                            # (Id, Description, SoundBase64, SoundId, SubsoundId)
+                            # VALUES (NULL, ?, ?, ?, NULL);"""
+                            # cursor.execute(sqlite_insert_query, (name, audio_base64, sound_id[0]))
+                    # если это подпапка, здесь нужно дописать логику
+                    else:
+                        cursor.execute("SELECT Id FROM Subinstuments WHERE Name = ?", (instrument_name,))
+                        subinstrument_id = cursor.fetchone()
+                        print(subinstrument_id)
+                        print(instrument_name, 'Инструмент')
+                        print(file)
+
+                    '''
                     if '.' not in number:
                         # записываем категорию для входящих в неё треков
                         name_category = name
@@ -192,7 +286,7 @@ def search_audio(search_path, keyword):
                         sqlite_insert_query = """INSERT INTO Sounds
                                                     (Id, Name, SubinstumentId, InstumentId, SubinstrumentId)
                                                     VALUES (NULL, ?, NULL, ?, NULL);"""
-                        cursor.execute(sqlite_insert_query, (name_without_extension, instrument_id[0]))
+                        #cursor.execute(sqlite_insert_query, (name_without_extension, instrument_id[0]))
                         path = search_path + '\\' + file
                         audio_base64 = encode_audio(path)
                         cursor.execute("SELECT Id FROM Sounds WHERE Name = ? AND InstumentId = ?",
@@ -200,12 +294,12 @@ def search_audio(search_path, keyword):
                         sound_id = cursor.fetchone()
                         print('sound_id =', sound_id)
                         # условие для отладки
-                        if sound_id[0] == 125:
-                            sqlite_insert_query = """INSERT INTO SoundsDatas
-                                                        (Id, Description, SoundBase64, SoundId, SubsoundId) 
-                                                        VALUES (NULL, ?, ?, ?, NULL);"""
+                        #if sound_id[0] == 125:
+                            #sqlite_insert_query = """INSERT INTO SoundsDatas
+                                                        #(Id, Description, SoundBase64, SoundId, SubsoundId)
+                                                        #VALUES (NULL, ?, ?, ?, NULL);"""
                             #cursor.execute(sqlite_insert_query, (name, audio_base64, sound_id[0]))
-
+                    '''
 
                     if file.endswith('.wav'):
                         # заполняем треками
@@ -246,7 +340,37 @@ def search_audio(search_path, keyword):
                             '''
 
             else:
-                search_audio(search_path + '\\' + file, keyword)
+                if count_subfolder > 1:
+                    print("ЭТО ПОДПАПКА ------------------------------------------------------", file)
+                    print('это счётчик подпапок -', count_subfolder)
+                    print(search_path)
+                    instrument = search_path.rpartition('\\')[-1]
+                    instrument_name = instrument.partition(' ')[2]
+                    name = file.partition(' ')[2]
+                    name_without_extension = name.split('.')[0]
+                    print(instrument_name)
+                    cursor.execute("SELECT Id FROM Instuments WHERE Name = ?",
+                                   (instrument_name,))
+                    instrument_id = cursor.fetchone()
+                    print(instrument_id, 'instrument ID')
+                    sqlite_insert_query_subinstruments = """INSERT INTO Subinstuments
+                                                            (Id, Name, InstumentId) 
+                                                                VALUES (NULL, ?, ?);"""
+                    # тест записи в бд
+                    # cursor.execute(sqlite_insert_query_subinstruments)
+                    cursor.execute(sqlite_insert_query_subinstruments, (name_without_extension, instrument_id[0]))
+                    sqlite_connection.commit()
+                    print("Записи успешно вставлены в таблицу sqlitedb_developers", cursor.rowcount)
+                    #sqlite_connection.commit()
+                    #cursor.close()
+                    print((name_without_extension, instrument_id[0]))
+
+                    #sqlite_insert_query = """INSERT INTO SoundsDatas
+                                                #(Id, Description, SoundBase64, SoundId, SubsoundId)
+                                                #VALUES (NULL, ?, ?, ?, NULL);"""
+                    # cursor.execute(sqlite_insert_query, (name, audio_base64, sound_id[0]))
+
+                search_audio(search_path + '\\' + file, keyword, count_subfolder)
         print(count_track)
 
         '''
@@ -309,6 +433,6 @@ if __name__ == "__main__":
     # search_subfolder(os.path.abspath(mypath), [], 0)
     # name_folder = ['Jaroslav', 'Timofei', 'Nikita']
     # insert_instruments(list_folder)
-    search_audio(os.path.abspath(mypath), '')  # jpg формат поиска # '.' все файлы '123'
+    search_audio(os.path.abspath(mypath), '', 0)  # jpg формат поиска # '.' все файлы '123'
     # encode_audio(path)
     print(mypath)
