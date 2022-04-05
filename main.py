@@ -2,8 +2,9 @@ import base64
 import os
 import sqlite3
 
-#path = "D:\\Instrumentation-2\\01-1. Скрипка.wav"
+path_to_images = "D:\\Instrum-v2\\Resources"
 mypath = "C:\\Program Files (x86)\\Инструментоведение\\sound"
+
 
 
 def insert_instruments(records):
@@ -53,9 +54,9 @@ def search_folder(search_path, name_folder):
 
 def search_image(search_path, name_image):
     with os.scandir(search_path) as scan:
-        list_folder = [file.name for file in scan if file.is_dir()]
+        list_folder = [file.name for file in scan if file.is_file()]
     for folder in list_folder:
-        name_image.append(folder.split('. ')[1])
+        name_image.append(folder)
     return name_image
 
 
@@ -353,7 +354,10 @@ def insert_images(records):
 
         #cursor.execute(sqlite_insert_query, (records[2],))
         for image in records:
-            cursor.execute(sqlite_insert_query, (image,))
+            print(path_to_images + '\\' + image)
+            image_base64 = encode_audio(path_to_images + '\\' + image)
+            #print(image_base64)
+            cursor.execute(sqlite_insert_query, (image_base64, image))
         # .executemany(sqlite_insert_query, (records,))
         # cursor.executemany("INSERT INTO Instuments VALUES(NULL, ?, 1)", (records,))
         sqlite_connection.commit()
@@ -396,6 +400,7 @@ if __name__ == "__main__":
     # search_subfolder(os.path.abspath(mypath), [], 0)
     # name_folder = ['Jaroslav', 'Timofei', 'Nikita']
     # insert_instruments(list_folder)
-    search_audio(os.path.abspath(mypath), '', 0)  # jpg формат поиска # '.' все файлы '123'
+    # search_audio(os.path.abspath(mypath), '', 0)  # jpg формат поиска # '.' все файлы '123'
     # encode_audio(path)
-    print(mypath)
+    list_images = search_image(os.path.abspath(path_to_images), [])
+    insert_images(list_images)
